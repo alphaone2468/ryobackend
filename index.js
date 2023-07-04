@@ -34,11 +34,11 @@ app.post("/getpost",async(req,resp)=>{
     const usut = seenupto+10;
     const data=await post.find().limit(10).skip(seenupto-1)
     const up=await users.updateOne({email:req.body.email},{$set:{seenupto:usut}})
-    // //console.log(data)
+    // console.log(data)
     resp.send(data)
     }
     catch (error) {
-        resp.send({"messae":"error"})
+        resp.send({"message":"error"})
     }
 })
 
@@ -46,8 +46,14 @@ app.post("/reg",async (req,resp)=>{
     console.log(req.body)
     if(req.body.username && req.body.email && req.body.password && req.body.seenupto){
         const check=await users.find({email:req.body.email})
-        if(check.length!=0){
-            resp.send({"error":"email already exist"})
+        const checkusername=await users.find({username:req.body.username})
+        console.log(checkusername);
+        if(check.length!=0 || checkusername.length!=0){
+            var message="email exist";
+            if(check.length==0){
+                message="username exist"
+            }
+            resp.send({"error":message})
         }
         else{
             const data=new users(req.body)
@@ -61,7 +67,7 @@ app.post("/reg",async (req,resp)=>{
     }
 })
 app.post("/login",async(req,resp)=>{
-    //console.log(req.body)
+    console.log(req.body)
     if(req.body.email && req.body.password){
         const check=await users.find({email:req.body.email,password:req.body.password})
         if(check.length==0){
@@ -78,12 +84,12 @@ app.post("/login",async(req,resp)=>{
 })
 
 app.post("/postimage",async(req,resp)=>{
-    //console.log(req.body)
+    console.log(req.body)
     if(req.body.owner && req.body.image && req.body.ratings && req.body.comments){
         const uniqueid=await uniqueidc.find()
-        //console.log(uniqueid)
+        console.log(uniqueid)
         const obj=uniqueid[0]
-        //console.log(obj.idpost)
+        console.log(obj.idpost)
         const idp = obj.idpost
         const objsend={
             owner:req.body.owner,
@@ -92,11 +98,11 @@ app.post("/postimage",async(req,resp)=>{
             comments:req.body.comments,
             uniqueid:idp
         }
-        //console.log(objsend)
+        console.log(objsend)
         const data=new post(objsend)
         const res=await data.save()
-        //console.log(res)
-        const updateid=await uniqueidc.updateOne({_id:"6478cb7bcf428b46c1a78c54"},{$set:{idpost:obj.idpost+1}})
+        console.log(res)
+        const updateid=await uniqueidc.updateOne({_id:"645baead24d76a5c2b77e580"},{$set:{idpost:obj.idpost+1}})
         console.log(updateid)
         
         resp.send({"success":"up"})
@@ -107,13 +113,13 @@ app.post("/postimage",async(req,resp)=>{
 })
 
 app.put("/updatepost",async(req,resp)=>{
-    //console.log(req.body)
+    console.log(req.body)
     const data = await post.find({uniqueid:req.body.id})
-    //console.log(data)
+    console.log(data)
     var ratingsn=data[0].comments[0].ratings
-    //console.log(ratingsn)
+    console.log(ratingsn)
     ratingsn.push(req.body.ratinggiven)
-    //console.log(ratingsn)
+    console.log(ratingsn)
     var countf=data[0].comments[1].count + 1
     const dataa = await post.updateOne({uniqueid:req.body.id},{$set:{comments:[{ratings:ratingsn},{count:countf}]}})
     resp.send({"message":"updated"})
@@ -122,9 +128,9 @@ app.put("/updatepost",async(req,resp)=>{
 app.get("/timepass",async(req,resp)=>{
     resp.send(" i am timepass")
     const data = await post.find().limit(5).skip(5)
-    //console.log(data.length)
+    console.log(data.length)
     data.filter((e)=>{
-        //console.log(e.uniqueid)
+        console.log(e.uniqueid)
     })
 })
 
@@ -164,6 +170,28 @@ app.post("/reset",async (req,resp)=>{
     const up=await users.updateOne({email:req.body.email},{$set:{seenupto:1}})
     console.log(up)
     resp.send({"message":"done"})
+})
+
+app.post("/searchusers",async (req,resp)=>{
+    console.log(req.body.value);
+    const data = await users.find({username:{$regex:`^${req.body.value}`,$options:'i'}});
+    console.log(data);
+
+    resp.send(data);
+})
+
+app.post("/getauserposts",async(req,resp)=>{
+    console.log("getauserpost");
+    const data = await post.find({"owner":req.body.username})
+    console.log(data);
+    resp.send(data);
+})
+
+app.get("/goto/:id",async (req,resp)=>{
+    console.log(req.params.id);
+    const data = await post.find({uniqueid:req.params.id});
+    console.log(data)
+    resp.send(data)
 })
 app.listen(port,()=>{
     console.log(`server running at ${port}`)
