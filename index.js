@@ -126,7 +126,7 @@ app.put("/updatepost",async(req,resp)=>{
 })
 
 app.get("/timepass",async(req,resp)=>{
-    resp.send(" i am timepass")
+    resp.send(" i am timepass updated")
     const data = await post.find().limit(5).skip(5)
     console.log(data.length)
     data.filter((e)=>{
