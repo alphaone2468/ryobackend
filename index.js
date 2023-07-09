@@ -9,6 +9,7 @@ require("./db/conn.js")
 const users=require("./models/userSch.js")
 const post=require("./models/postSch.js")
 const uniqueidc=require("./models/UniqueidSch.js")
+const followcoll=require("./models/followingSch.js")
 
 
 app.use(cors())
@@ -126,7 +127,7 @@ app.put("/updatepost",async(req,resp)=>{
 })
 
 app.get("/timepass",async(req,resp)=>{
-    resp.send(" i am timepass updated")
+    resp.send(" i am timepass new upadted")
     const data = await post.find().limit(5).skip(5)
     console.log(data.length)
     data.filter((e)=>{
@@ -145,7 +146,9 @@ app.put("/comment",async(req,resp)=>{
         name:req.body.name
     }
     c.push(obj)
+    console.log(c);
     const addcomment=await post.updateOne({uniqueid:req.body.id},{$set:{comments:c}})
+    console.log(addcomment)
     resp.send({"success":"comment posted"})
 })
 
@@ -184,7 +187,15 @@ app.post("/getauserposts",async(req,resp)=>{
     console.log("getauserpost");
     const data = await post.find({"owner":req.body.username})
     console.log(data);
-    resp.send(data);
+    let followersd=await followcoll.find({user:req.body.username})
+    if(followersd.length==0){
+        const newuser=new followcoll({user:req.body.username,followers:0})
+        const data =await newuser.save();
+        console.log(data)
+        followersd=[data];
+    }
+    console.log(followersd[0].followers)
+    resp.send([data,followersd[0].followers]);
 })
 
 app.get("/goto/:id",async (req,resp)=>{
@@ -192,6 +203,60 @@ app.get("/goto/:id",async (req,resp)=>{
     const data = await post.find({uniqueid:req.params.id});
     console.log(data)
     resp.send(data)
+})
+app.post("/getfoll",async (req,resp)=>{
+    console.log("calling");
+    console.log(req.body);
+    const data = await followcoll.find({"user":req.body.user})
+    console.log(data);
+    if(data.length==0){
+        const newuser=new followcoll({"user":req.body.user,"followers":0})
+        const res = await newuser.save();
+        console.log(res);
+        const data = await followcoll.find({"user":req.body.user})
+        console.log(data);
+        resp.send(data); 
+    }
+    else{
+        resp.send(data); 
+    }
+    
+})
+app.post("/addfollow",async (req,resp)=>{
+    console.log(req.body);
+    let data=await followcoll.find({user:req.body.user});
+    // console.log(data);
+    // console.log(data[0])
+    console.log("hell0")
+    if(data.length==0){
+        console.log("new create")
+        const adduser = await new followcoll({user:req.body.user,followers:0})
+        const res=await adduser.save();
+        console.log(res)
+        data=[res];
+    }
+    console.log(data);
+    const newfollowarray = [...data[0].following]
+    // console.log(newfollowarray)
+    newfollowarray.unshift(req.body.followed)
+    console.log(newfollowarray)
+    const update=await followcoll.updateOne({user:req.body.user},{$set:{following:newfollowarray}})
+    console.log(update)
+
+    //updating follwers
+    let getOldFollowersData=await followcoll.find({user:req.body.followed})
+    console.log(getOldFollowersData)
+    if(getOldFollowersData.length==0){
+        const newuser=new followcoll({user:req.body.followed,followers:0})
+        const data=await newuser.save();
+        console.log(data);
+        getOldFollowersData=[data];
+    }
+    let oldfollowers=getOldFollowersData[0].followers
+    let newfollowers=oldfollowers+1;
+    const updatefollwers=await followcoll.updateOne({user:req.body.followed},{$set:{followers:newfollowers}})
+
+    resp.send({"message":"done"});
 })
 app.listen(port,()=>{
     console.log(`server running at ${port}`)
