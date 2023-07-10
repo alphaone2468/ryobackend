@@ -111,7 +111,7 @@ app.post("/postimage",async(req,resp)=>{
         const data=new post(objsend)
         const res=await data.save()
         console.log(res)
-        const updateid=await uniqueidc.updateOne({_id:"645baead24d76a5c2b77e580"},{$set:{idpost:obj.idpost+1}})
+        const updateid=await uniqueidc.updateOne({_id:"6478cb7bcf428b46c1a78c54"},{$set:{idpost:obj.idpost+1}})
         console.log(updateid)
         
         resp.send({"success":"up"})
