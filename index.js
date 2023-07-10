@@ -22,23 +22,31 @@ const port=process.env.PORT
 app.get("/",(req,resp)=>{
     resp.send("i am home")
 })
-var c=0;
 app.post("/getpost",async(req,resp)=>{
     console.log(req.body)
     const user=req.body.email
-    const datan=await users.find({email:req.body.email})
-    c=c+1;
-    console.log(c)
-    try {
-         
-    const seenupto=datan[0].seenupto
-    const usut = seenupto+10;
+    const datan=await users.find({email:req.body.email})     
+    try{    
+    let seenupto=datan[0].seenupto
+    const getuniqueid=await uniqueidc.find();
+    let maxpost=getuniqueid[0].idpost
+    console.log(seenupto)
+    console.log(maxpost)
+    let usut;
+    if(seenupto>maxpost){
+        usut=1;
+        seenupto=1;
+    }
+    else{
+        usut=seenupto + 10;
+    }
+
     const data=await post.find().limit(10).skip(seenupto-1)
     const up=await users.updateOne({email:req.body.email},{$set:{seenupto:usut}})
     // console.log(data)
     resp.send(data)
-    }
-    catch (error) {
+}
+    catch{
         resp.send({"message":"error"})
     }
 })
@@ -103,7 +111,7 @@ app.post("/postimage",async(req,resp)=>{
         const data=new post(objsend)
         const res=await data.save()
         console.log(res)
-        const updateid=await uniqueidc.updateOne({_id:"6478cb7bcf428b46c1a78c54"},{$set:{idpost:obj.idpost+1}})
+        const updateid=await uniqueidc.updateOne({_id:"645baead24d76a5c2b77e580"},{$set:{idpost:obj.idpost+1}})
         console.log(updateid)
         
         resp.send({"success":"up"})
